@@ -264,7 +264,7 @@ function AddExpense() {
 
 
   return (
-    <div className='ml-60 flex flex-col justify-center items-center min-h-screen '>
+    <div className='ml-60 flex flex-col justify-center items-center min-h-screen overflow-scroll '>
 
         <div className='bg-[#eef3ff] ml-6 w-[90%] rounded-xl p-6 border-[#1d4ed8]/20 border-2'>
 

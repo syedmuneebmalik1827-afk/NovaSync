@@ -23,6 +23,7 @@ function Groups() {
       console.log("0")
 
 
+
     try{
       let newGroup = await axios.post('http://localhost:3000/groups/create', {
         "groupName":groupName,
@@ -34,6 +35,7 @@ function Groups() {
         }
       })
 
+      
       console.log("1")
 
       setGroupDescription("")
@@ -41,6 +43,7 @@ function Groups() {
       setMembersids([])
 
       console.log("2")
+
 
 
       setCreateGroupPopup(false)
@@ -132,7 +135,10 @@ function Groups() {
 
               <div>
                  <button className='flex justify-center items-center cursor-pointer text-white text-lg bg-blue-700 px-3 mr-6 py-[3.6px] rounded hover:bg-blue-700/40' onClick={(e)=>{
+                  document.documentElement.style.overflow = "auto"
+                  document.body.style.overflow = "auto"
                   setCreateGroupPopup(false);
+
                   setGroupName("");
                   setGroupDescription("");
                   setMembersids([])
@@ -179,8 +185,13 @@ function Groups() {
         <div className='sm:ml-60 flex flex-col'>
 
           <div className='flex justify-between items-center mr-6 ml-6 my-6'>
-            <p className='text-4xl font-bold text-[#1d4ed8]'>Your Groups</p>
-            <button onClick={(e)=>setCreateGroupPopup(true)} className='cursor-pointer bg-[#1d4ed8] px-2 py-0.5 hover:bg-blue-700/60 text-white'>Add Group</button>
+            <p className='text-4xl font-bold text-[#1d4ed8]'>Your Groups!</p>
+            <button onClick={(e)=>{
+              setCreateGroupPopup(true)
+              document.body.style.overflow = "hidden"
+              document.documentElement.style.overflow = "hidden"
+            }
+            } className='cursor-pointer bg-[#1d4ed8] px-2 py-0.5 hover:bg-blue-700/60 text-white'>Add Group</button>
           </div>
 
           <div className='w-full flex justify-center items-center'>
@@ -190,11 +201,11 @@ function Groups() {
           </div>
 
           <div className='flex gap-14 flex-wrap justify-center items-center mb-10'>
-            {groups.filter((group, index)=>{
+            
+            {groups.length ?  groups.filter((group, index)=>{
               return group.groupName.toLowerCase().includes(groupNameSearch.trim().toLowerCase() || "")
             }).map((group, index)=>{
               let numberOfMembers = group.members.length
-              if(group){
                 return <div className='flex gap-2 flex-col bg-[#eef3ff] w-100 min-h-50 rounded shadow-sm p-4' key={group._id}>
                 {/* <p>Group {index+1} : </p> */}
                 <p className='text-2xl text-[#1e2230] font-semibold'>{group.groupName}</p>
@@ -205,12 +216,13 @@ function Groups() {
                   <Link className='bg-[#1d4ed8] text-white py-[1px] px-[6px] cursor-pointer' to={`/groups/${group._id}`}>View</Link>
                 </div>
                 </div>
-              }else{
-                return <p>No Groups Found</p>
-              }
               // </div>
             })
-          }
+            : <p className='text-3xl text-gray-500 font-semibold mt-10'>No Groups Found!</p>}
+
+            
+
+            
           </div>
         </div>
     </div>

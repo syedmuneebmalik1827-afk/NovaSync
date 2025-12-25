@@ -14,14 +14,17 @@ function ViewGroup() {
     let token = localStorage.getItem('token')
     let [viewGroupInfo, setViewGroupInfo] = useState([])
     let [createdBy, setCreatedBy] = useState([])
+    let [isLoading, setIsloading] = useState(true)
     let [members, setMembers] = useState([])
     let [editPopup, setEditPopup] = useState(false)
 
     let [updatedGroupName, setUpdatedGroupName] = useState("")
     let [updatedGroupDescription, setUpdatedGroupDescription] = useState("")
     let [deleteGroupPopup, setDeleteGroupPopup] = useState(false)
+    let [expensePopup, setExpensePopup] = useState(false)
+    let [currentExpense, setCurrentExpense] = useState([]);
 
-
+    
     let [expenses, setExpenses] = useState([])
 
     // 
@@ -47,7 +50,7 @@ function ViewGroup() {
 
             setTotalExpense(allExpenses.data.totalExpense)
             setAmountToBePaidByCurrentUserInAnExpense(allExpenses.data.amountToBePaidByCurrentUser)
-            console.log(allExpenses.data.amountToBePaidByCurrentUser[1].finalResult.amount)
+            // console.log(allExpenses.data.amountToBePaidByCurrentUser[1].finalResult.amount)
         }catch(err){
             console.log("error getting expenses in view group", err)
         }
@@ -65,7 +68,8 @@ function ViewGroup() {
         })
 
         setMinimumAmountToBePaidByCurrentUserInAnExpense(minimumTransaction.data.minimumTransactionsInBackendForCurrentuser[0].totalAmount)
-        console.log(minimumTransaction.data.minimumTransactionsInBackend)
+        setIsloading(false)
+        // console.log(minimumTransaction.data.minimumTransactionsInBackend)
 
         }catch(err){
             console.log("error occured while finding minimum transactions frontend", err)
@@ -277,6 +281,73 @@ function ViewGroup() {
         </motion.div>}
         </AnimatePresence>
 
+        <AnimatePresence>
+                    {expensePopup && 
+                   <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}>
+                   <div className='inset-0 fixed flex flex-col justify-center items-center h-screen w-screen backdrop-blur-sm bg-black/50'>
+                        <div className='flex justify-between items-center w-[90%]'>
+                            <button className='opacity-0'><X/></button>
+                            
+                        </div>
+                        <div className='bg-[#eef3ff] border-2 border-[#1e2230]/20 min-h-95 w-[500px] rounded-xl pb-5'>
+                            <div className='ml-6 mt-6 flex flex-col justify-center items-start'>
+                                <div className='flex justify-between items-center w-[95%] mb-2'>
+                                    <p className='text-[#1e4ed8] text-3xl font-bold mb-2'>{currentExpense.expenseName}</p>
+                                    <button className='cursor-pointer text-white bg-[#1d4ed8] py-0.5 px-1.5 flex justify-center items-center gap-1 hover:bg-[#1d4ed8]/60' onClick={(e)=>{
+                                    setExpensePopup(false)
+                                    document.body.style.overflow = "auto"
+                                    document.documentElement.style.overflow = "auto"
+                                    }}>Close<X/></button>
+                                </div>
+                                <p className='text-gray-600 w-[80%]'>{currentExpense.expenseDescription}</p>
+        
+                                <div className='mt-4'>
+                                    <p><span className='text-[#2563eb] font-semibold text-[20px] mb-2'>Payer</span> : {currentExpense.paidBy}</p>
+                                    <p><span className='text-[#2563eb] font-semibold text-[20px]'>Total Amount</span> : {currentExpense.totalAmount}</p>
+                                </div>
+        
+                                <div className='mt-4'>
+                                    <p><span className='text-[#2563eb] font-semibold text-[20px]'>Split Type</span> : {currentExpense.splitType}</p>
+                                </div>
+        
+                                <div className='mt-4 flex flex-col'>
+                                    <p className='mb-2'><span className='text-[#2563eb] font-semibold text-[20px]'>Contributors : </span></p>
+                                    <div className='flex gap-3'>
+                                        <div className='flex flex-col'>
+                                        {
+                                            Object.keys(currentExpense.percentages).map((user, index)=>{
+                                                return <p key={index}>{user}{" : "}</p>
+                                            })
+                                        }
+                                        </div>
+                                        
+                                        <div className='flex flex-col'>
+                                        {
+        
+                                            // 
+                                            Object.values(currentExpense.percentages).map((amount, index)=>{
+                                                return <p key={index}>{
+                                                    currentExpense.splitType === "Percentage" ? amount : 
+                                                    (currentExpense.splitType === "Equal"? 
+                                                        (currentExpense.totalAmount/currentExpense.contributorsLength).toFixed(2)  : (currentExpense.totalAmount/currentExpense.contributorsLength).toFixed(2))
+                                                        
+                                                }{currentExpense.splitType === "Percentage" ? " %" : " /-"}</p>
+                                            })
+                                        }
+        
+                                        
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div></motion.div>}
+                   </AnimatePresence>
+
         {/* poora content */}
         <div className='sm:ml-60 '>
 
@@ -330,14 +401,17 @@ function ViewGroup() {
                     <Link to={`/groups/${groupId}/addExpense`} className='bg-[#1d4ed8] text-white py-[2px] px-[8px] flex justify-center items-center gap-1 text-md cursor-pointer hover:bg-blue-700/40'>Add Expense</Link>
                 </div>
 
-                <div className='w-[70vw] flex justify-between items-center mb-3'>
-                    <p>Net Balance : <span className={`${minimumamountToBePaidByCurrentUserInAnExpense ? "text-green-600" : "text-red-600"}`}>{minimumamountToBePaidByCurrentUserInAnExpense}</span></p>
+                {!isLoading && 
+                    <div className='w-[70vw] flex justify-between items-center mb-3'>
+                    <p className='flex justify-center items-center gap-4'>Net Balance : <span className={`text-2xl ${minimumamountToBePaidByCurrentUserInAnExpense > 0 ? "text-green-600" : "text-red-600"}`}>{minimumamountToBePaidByCurrentUserInAnExpense.toFixed(2)}</span></p>
                     <button className='opacity-0 bg-[#1d4ed8] px-2 py-0.5 hover:bg-blue-700/60 text-white'>Add Group</button>
                 </div>
+                }
+                
             </div>
 
             <div className='my-5 flex justify-center items-center'>
-                <ExpenseComponent expenses={expenses} totalExpense={totalExpense}  amountToBePaidByCurrentUserInAnExpense={amountToBePaidByCurrentUserInAnExpense}/>
+                <ExpenseComponent expenses={expenses} totalExpense={totalExpense}  amountToBePaidByCurrentUserInAnExpense={amountToBePaidByCurrentUserInAnExpense} setExpensePopup={setExpensePopup} setCurrentExpense={setCurrentExpense}/>
             </div>
 
 

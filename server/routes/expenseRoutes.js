@@ -5,9 +5,31 @@ let auth = require('../middlewares/auth')
 
 
 // all expenses
-router.get('/', async (req, res) => {
+router.get('/dashboard', auth, async (req, res) => {
     try{
-    let allexpensesGivenToFrontend = await expenseModels.find()
+    let allexpensesGivenToFrontend = await expenseModels.aggregate([
+        {
+            $match : {
+                "contributors": req.user.username
+            }
+        },
+        {
+            $limit : 5
+        }
+    ])
+
+    res.json({allexpensesGivenToFrontend})
+    }catch(err){
+        console.log("error sending all expenses from backend", err)
+    }
+})
+
+
+router.get('/', auth, async (req, res) => {
+    try{
+    let allexpensesGivenToFrontend = await expenseModels.find({
+        contributors : req.user.username
+    })
 
     res.json({allexpensesGivenToFrontend})
     }catch(err){
@@ -65,6 +87,112 @@ router.get('/minimumTransactionInAllExpenses', auth, async (req, res)=>{
         }
     ])
 
+    let amountOwedByUserTotal = await expenseModels.aggregate([
+        {
+            $project:{
+                finalResult : {
+                    $map:{
+                    input: {"$objectToArray" : '$percentages'},
+                    as : "oneuser",
+                    in : {
+                        "user":"$$oneuser.k",
+                        "amount":{
+                            $cond : [
+                                {$eq : ["$$oneuser.k" , "$paidBy"]}
+                            , 
+                            {$subtract : ["$totalAmount", {$multiply : [{$divide : ["$totalAmount", 100]} , "$$oneuser.v"]}]},
+                            {$multiply : [{$divide : ["$totalAmount", -100]} , "$$oneuser.v"]}
+                                ]
+                            }
+                        }
+                    }
+                
+                    }
+                }
+        },
+
+        {$unwind : "$finalResult"},
+            
+
+        {
+            $group:{
+                "_id":"$finalResult.user",
+                "totalAmount":{
+                            $sum : {
+                                $cond : [
+                                    {$lt : ["$finalResult.amount", 0]},
+                                    "$finalResult.amount",
+                                    0
+                                ]
+                            }
+                    }
+            }
+        },
+
+        {
+            $project:{
+                user:"$_id",
+                "totalAmount":1
+            }
+        }, 
+        {
+            $match:{"user":req.user.username}
+        }
+    ])
+
+    let amountToBeRecievedByUserTotal = await expenseModels.aggregate([
+        {
+            $project:{
+                finalResult : {
+                    $map:{
+                    input: {"$objectToArray" : '$percentages'},
+                    as : "oneuser",
+                    in : {
+                        "user":"$$oneuser.k",
+                        "amount":{
+                            $cond : [
+                                {$eq : ["$$oneuser.k" , "$paidBy"]}
+                            , 
+                            {$subtract : ["$totalAmount", {$multiply : [{$divide : ["$totalAmount", 100]} , "$$oneuser.v"]}]},
+                            {$multiply : [{$divide : ["$totalAmount", -100]} , "$$oneuser.v"]}
+                                ]
+                            }
+                        }
+                    }
+                
+                    }
+                }
+        },
+
+        {$unwind : "$finalResult"},
+            
+
+        {
+            $group:{
+                "_id":"$finalResult.user",
+                "totalAmount":{
+                            $sum : {
+                                $cond : [
+                                    {$gt : ["$finalResult.amount", 0]},
+                                    "$finalResult.amount",
+                                    0
+                                ]
+                            }
+                    }
+            }
+        },
+
+        {
+            $project:{
+                user:"$_id",
+                "totalAmount":1
+            }
+        }, 
+        {
+            $match:{"user":req.user.username}
+        }
+    ])
+
     let amountToBePaidByCurrentUser = await expenseModels.aggregate([
 
             {
@@ -99,7 +227,9 @@ router.get('/minimumTransactionInAllExpenses', auth, async (req, res)=>{
             }
     ])
 
-    res.json({minimumtransactionOfUserInAllExpenses, amountToBePaidByCurrentUser})
+   
+
+    res.json({minimumtransactionOfUserInAllExpenses, amountToBePaidByCurrentUser, amountOwedByUserTotal, amountToBeRecievedByUserTotal})
 }catch(err){
     console.log("errro sending minimum transaction of all expenses", err)
 }
