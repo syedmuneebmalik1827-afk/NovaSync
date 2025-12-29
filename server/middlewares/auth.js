@@ -8,7 +8,7 @@ let auth = async (req, res, next)=>{
     try{
         let userInfo = jwt.verify(token, process.env.JWTCODE)
         req.user = userInfo
-        console.log(req.user)
+        // console.log(req.user)
         next()
     }catch(err){
         return res.status(404).json({

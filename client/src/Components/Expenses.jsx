@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { X, Search } from 'lucide-react'
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, time } from "framer-motion"
 
 
 
@@ -19,9 +19,10 @@ function Expenses() {
     let [amountOwedByUser, setAmountOwedByUser]=useState()
     let [amountToBeRecievedByUserTotal, setAmountToBeRecievedByUserTotal]=useState()
     let token = localStorage.getItem('token')
-    let [filterCondition, setFilterConditon] = useState(true)
 
     let [searchInput, setSearchInput] = useState("")
+    let [timeFilter, setTimeFilter] = useState("None")
+    let timeFilterArray;
 
     let getAllExpenses = async () =>{
         try{
@@ -49,9 +50,7 @@ function Expenses() {
             })
 
             setTotalExpenseOfAUserInOneExpense(minimumtransactionofallexpensesofuser.data.amountToBePaidByCurrentUser)
-            console.log(minimumtransactionofallexpensesofuser.data.amountToBePaidByCurrentUser)
             setminimumtransactionOfUserInAllExpenses(minimumtransactionofallexpensesofuser.data.minimumtransactionOfUserInAllExpenses)
-            console.log(minimumtransactionofallexpensesofuser.data.minimumtransactionOfUserInAllExpenses[0].totalAmount)
 
             setAmountOwedByUser(minimumtransactionofallexpensesofuser.data.amountOwedByUserTotal[0].totalAmount)
             setAmountToBeRecievedByUserTotal(minimumtransactionofallexpensesofuser.data.amountToBeRecievedByUserTotal[0].totalAmount)
@@ -59,6 +58,47 @@ function Expenses() {
         }catch(err){
             console.log("error getting minimum transaction of user in all expenses",err)
         }
+    }
+
+    let timeAgo = (timeGiven) =>{
+        let timeDiff = (new Date().getTime() - new Date(timeGiven).getTime())/(1000*60*60*24)
+        console.log(timeDiff)
+        
+        if(timeDiff < 1){
+            console.log((new Date().getTime() - new Date(timeGiven).getTime()))
+            timeFilterArray = ["Today", "This Month", "This Week", "This Year", "None"]
+                console.log(timeFilterArray)
+
+            return timeFilterArray
+        }
+
+        if(timeDiff < 7){
+            console.log("2")
+                timeFilterArray = ["This Month", "This Week", "This Year", "None"]
+                console.log(timeFilterArray)
+
+            return timeFilterArray
+        }
+        if(timeDiff < 31){
+            console.log("3")
+                timeFilterArray = ["This Month", "This Year", "None"]
+                console.log(timeFilterArray)
+            return timeFilterArray
+        }
+        if(timeDiff/31 < 1){
+            console.log("3")
+                timeFilterArray = [ "This Year", "None"]
+                console.log(timeFilterArray)
+            return timeFilterArray
+        }
+        else if(timeDiff/31 > 1){
+            console.log("3")
+                timeFilterArray = ["Other", "None"]
+                console.log(timeFilterArray)
+            return timeFilterArray
+        }
+        
+
     }
 
     useEffect(()=>{
@@ -158,9 +198,17 @@ function Expenses() {
 
         <div className='flex justify-start items-center w-[70vw] gap-20 my-3'>
             <p>Filter By : </p>
-            <div className='flex gap-10'>
+            <div className='flex gap-14'>
+                <p className={`cursor-pointer ${timeFilter=="None"?"text-[#1d4ed8]" : ""}`} onClick={(e)=>{setTimeFilter("None")}}>None</p>
+                <p className={`cursor-pointer ${timeFilter=="Today"?"text-[#1d4ed8]" : ""}`} onClick={(e)=>{setTimeFilter("Today")}}>Today</p>
+                <p className={`cursor-pointer ${timeFilter=="This Week"?"text-[#1d4ed8]" : ""}`}onClick={(e)=>setTimeFilter("This Week")}>This Week</p>
+                <p className={`cursor-pointer ${timeFilter=="This Month"?"text-[#1d4ed8]" : ""}`} onClick={(e)=>setTimeFilter("This Month")}>This Month</p>
+                <p className={`cursor-pointer ${timeFilter=="This Year"?"text-[#1d4ed8]" : ""}`} onClick={(e)=>setTimeFilter("This Year")}>This Year</p>
+                <p className={`cursor-pointer ${timeFilter=="Other"?"text-[#1d4ed8]" : ""}`} onClick={(e)=>setTimeFilter("Other")}>Other</p>
+            </div>
+            {/* <div className='flex gap-10'>
                 <p className='cursor-pointer' onClick={(e)=>setExpenses(expensesTemp)}>None</p>
-                <p className='cursor-pointer text-[#1d4ed8]' onClick={(e)=>{
+                <p className='cursor-pointer' onClick={(e)=>{
                     let newExpenses = expenses.filter((expense, index)=>{
                         return totalExpenseOfAUserInOneExpense?.[index]?.finalResult.amount.toFixed(2).includes("-") 
                     })
@@ -174,7 +222,9 @@ function Expenses() {
 
                     setExpenses(newExpensesRecievable)
                 }}>Recievable</p>
-            </div>
+            </div> */}
+
+
         </div>
         <div className='border-2 border-[#1d4ed8]/20 rounded-xl pt-4 mb-10 mt-3'>
 
@@ -190,9 +240,13 @@ function Expenses() {
             <div className=''>
         {
           expenses.filter((expense, index)=>{
-            return expense.expenseName.toLowerCase().includes(searchInput.trim().toLowerCase())
+            // console.log(timeFilter != "None")
+            // console.log(timeFilter != "None" ? timeFilter == timeAgo(expense.createdAt) : true)
+            console.log(new Date().getTime() - new Date(expense.createdAt).getTime())
+            timeAgo(expense.createdAt)
+            return expense.expenseName.toLowerCase().includes(searchInput.trim().toLowerCase()) && timeFilterArray.includes(timeFilter)
           }).map((expense, index)=>{
-                    
+                    // timeAgo(expense.createdAt)
                     return <div className='flex justify-evenly items-center w-[70vw] border-b border-b-gray-300 py-7' key={index}>
                       <p className='w-[14vw] flex justify-center items-center'>{index+1}</p>
                       <p className='w-[14vw] flex justify-center items-center'>{expense.expenseName}</p>

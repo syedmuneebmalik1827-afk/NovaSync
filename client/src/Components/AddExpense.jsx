@@ -245,9 +245,6 @@ function AddExpense() {
                 Authorization:`Bearer ${token}`
             }
         })
-
-
-
         }catch(err){
             if(err.response.data.message){
             toast(err.response.data.message,

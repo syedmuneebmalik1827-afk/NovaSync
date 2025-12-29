@@ -1,7 +1,7 @@
 import React from 'react'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { ArrowRight, Info, X } from 'lucide-react'
+import { ArrowRight, Info, X , ChevronLeft, ChevronRight} from 'lucide-react'
 import { motion, AnimatePresence } from "framer-motion"
 import { useNavigate } from 'react-router-dom'
 
@@ -19,6 +19,8 @@ function Dashboard() {
   let token = localStorage.getItem('token')
   let [usernameOfCurrentUser, setUsernameOfCurrentUser] = useState("")
 
+  let [limit, setLimit] = useState(5)
+
   let navigate = useNavigate();
 
   let getCurrentUser = async () => {
@@ -35,16 +37,22 @@ function Dashboard() {
     }
   }
 
+  let [pagePart, setPage] = useState(1)
+  let [numberOfPages, setNumberOfPages] = useState()
+
 
   let getAllExpenses = async () =>{
         try{
-            let allexpensesfrombackend = await axios.get('http://localhost:3000/expenses/dashboard', {
+            let allexpensesfrombackend = await axios.get(`http://localhost:3000/expenses/dashboard/${pagePart}/${limit} `, {
             headers:{
                 Authorization:`Bearer ${token}`
             }
         })
 
-        console.log(allexpensesfrombackend.data.allexpensesGivenToFrontend)
+        // console.log(allexpensesfrombackend.data.allexpensesGivenToFrontend)
+        setNumberOfPages(Math.ceil(allexpensesfrombackend.data.totalNumberOfExpenses.length/limit))
+        console.log(Math.ceil(allexpensesfrombackend.data.totalNumberOfExpenses.length/limit))
+
 
         setExpenses(allexpensesfrombackend.data.allexpensesGivenToFrontend)
         }catch(err){
@@ -63,9 +71,9 @@ function Dashboard() {
             })
 
             setTotalExpenseOfAUserInOneExpense(minimumtransactionofallexpensesofuser.data.amountToBePaidByCurrentUser)
-            console.log(minimumtransactionofallexpensesofuser.data.amountToBePaidByCurrentUser)
+            // console.log(minimumtransactionofallexpensesofuser.data.amountToBePaidByCurrentUser)
             setminimumtransactionOfUserInAllExpenses(minimumtransactionofallexpensesofuser.data.minimumtransactionOfUserInAllExpenses)
-            console.log(minimumtransactionofallexpensesofuser.data.minimumtransactionOfUserInAllExpenses[0].totalAmount)
+            // console.log(minimumtransactionofallexpensesofuser.data.minimumtransactionOfUserInAllExpenses[0].totalAmount)
 
             setAmountOwedByUser(minimumtransactionofallexpensesofuser.data.amountOwedByUserTotal[0].totalAmount)
             setAmountToBeRecievedByUserTotal(minimumtransactionofallexpensesofuser.data.amountToBeRecievedByUserTotal[0].totalAmount)
@@ -76,10 +84,13 @@ function Dashboard() {
     }
 
     useEffect(()=>{
-        getAllExpenses()
         minimumTransactionOfUserInAllExpneses()
         getCurrentUser()
     }, [])
+
+    useEffect(()=>{
+        getAllExpenses()
+    }, [pagePart])
 
   return (
     <div>
@@ -190,7 +201,7 @@ function Dashboard() {
             <p className='text-3xl font-bold text-[#1d4ed8]'>Your Expenses!</p>
         </div>
 
-        <div className='border-2 border-[#1d4ed8]/20 rounded-xl pt-4 mb-6 '>
+        <div className='border-2 border-[#1d4ed8]/20 rounded-xl pt-4 mb-2 '>
 
         <div className='flex justify-evenly items-center border-b border-b-gray-300 pb-3 w-[70vw] text-gray-500 text-lg'>
           <p className='w-[14vw] flex justify-center items-center'>Index</p>
@@ -227,6 +238,22 @@ function Dashboard() {
         }
         </div>
       </div>
+
+        <div className='flex justify-between items-center w-[68vw] mb-6'>
+          <div className='opacity-0'>
+            <button className='cursor-pointer' onClick={(e)=>{setPage(pagePart-1)}}><ChevronLeft/></button>
+            <button className='cursor-pointer' onClick={(e)=>{setPage(pagePart+1)}}><ChevronRight/></button>
+          </div>
+          <div className='flex gap-2 justify-center items-center'>
+            <p >Page {pagePart} / {numberOfPages}</p>
+            <button className='cursor-pointer text-gray-400 hover:text-gray-600' onClick={(e)=>{if(pagePart >= numberOfPages){
+              setPage(pagePart-1)
+            }}}><ChevronLeft/></button>
+            <button className={`cursor-pointer text-gray-400 hover:text-gray-600`} onClick={(e)=>{if(pagePart <= numberOfPages){
+              setPage(pagePart+1)
+            }}}><ChevronRight/></button>
+          </div>
+        </div>
 
 
     </div>

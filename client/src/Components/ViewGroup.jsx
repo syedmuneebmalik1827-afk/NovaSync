@@ -23,9 +23,13 @@ function ViewGroup() {
     let [deleteGroupPopup, setDeleteGroupPopup] = useState(false)
     let [expensePopup, setExpensePopup] = useState(false)
     let [currentExpense, setCurrentExpense] = useState([]);
+    let [recordOfTransactions, setRecordOfTransactions] = useState([])
+    let [currentUserUsername, setCurrentUserUsername] = useState("")
+
+    let [minTransactionsOfAllUsersList, setMinTransactionsOfAllUsersList] = useState([])
 
     
-    let [expenses, setExpenses] = useState([])
+    // let [expenses, setExpenses] = useState([])
 
     // 
     let [totalExpense, setTotalExpense] = useState([])
@@ -36,6 +40,21 @@ function ViewGroup() {
     // at end
     let [minimumamountToBePaidByCurrentUserInAnExpense, setMinimumAmountToBePaidByCurrentUserInAnExpense] = useState([])
 
+    let currentUser = async () =>{
+        try{
+            let userdetailsinfrontend = await axios.get('http://localhost:3000/users/me', {
+                headers:{
+                    Authorization: `Bearer ${token}`
+                }
+            })
+
+            // console.log(userdetailsinfrontend.data)
+            setCurrentUserUsername(userdetailsinfrontend.data.username)
+        }catch(err){
+            console.log("error getting current user in frontend", err)
+        }
+    }
+
     let fetchExpenses = async () =>{
 
         try{
@@ -45,8 +64,7 @@ function ViewGroup() {
                 }
             })
 
-            setExpenses(allExpenses.data.amountToBePaidByUser)
-            // console.log(allExpenses.data.amountToBePaidByUser)
+            // setExpenses(allExpenses.data.amountToBePaidByUser)
 
             setTotalExpense(allExpenses.data.totalExpense)
             setAmountToBePaidByCurrentUserInAnExpense(allExpenses.data.amountToBePaidByCurrentUser)
@@ -69,7 +87,10 @@ function ViewGroup() {
 
         setMinimumAmountToBePaidByCurrentUserInAnExpense(minimumTransaction.data.minimumTransactionsInBackendForCurrentuser[0].totalAmount)
         setIsloading(false)
-        // console.log(minimumTransaction.data.minimumTransactionsInBackend)
+        setMinTransactionsOfAllUsersList(minimumTransaction.data.minimumTransactionsInBackend)
+        console.log(minimumTransaction.data.minimumTransactionsInBackend)
+        setRecordOfTransactions(minimumTransaction.data.recordOfTransactions)
+        console.log(minimumTransaction.data.recordOfTransactions)
 
         }catch(err){
             console.log("error occured while finding minimum transactions frontend", err)
@@ -79,6 +100,7 @@ function ViewGroup() {
     useEffect(()=>{
         fetchExpenses()
         minimumTransaction()
+        currentUser()
     }, [])
 
     let fetchGroupInfo = async () =>{
@@ -389,29 +411,43 @@ function ViewGroup() {
                 {/* group Info ka right part*/}
                 <div className='flex flex-col w-[30vw]'>
                     {/* created by */}
-                    
                 </div>
             </div>
 
 
             {/* bottom part */}
             <div className='flex flex-col justify-center items-center w-full'>
-                <div className='flex justify-between items-center w-[70vw] mt-5 mb-5'>
+                <div className='flex justify-between items-center w-[70vw] mt-10 mb-5'>
                     <p className='text-3xl font-bold text-[#1d4ed8]'>Expenses</p>
                     <Link to={`/groups/${groupId}/addExpense`} className='bg-[#1d4ed8] text-white py-[2px] px-[8px] flex justify-center items-center gap-1 text-md cursor-pointer hover:bg-blue-700/40'>Add Expense</Link>
                 </div>
 
                 {!isLoading && 
-                    <div className='w-[70vw] flex justify-between items-center mb-3'>
-                    <p className='flex justify-center items-center gap-4'>Net Balance : <span className={`text-2xl ${minimumamountToBePaidByCurrentUserInAnExpense > 0 ? "text-green-600" : "text-red-600"}`}>{minimumamountToBePaidByCurrentUserInAnExpense.toFixed(2)}</span></p>
-                    <button className='opacity-0 bg-[#1d4ed8] px-2 py-0.5 hover:bg-blue-700/60 text-white'>Add Group</button>
-                </div>
+                    <div className='w-[70vw] flex flex-col justify-center items-start'>
+                        <div className='w-[70vw] flex justify-between items-center '>
+                        <p className='flex justify-center items-center gap-4'>Net Balance : <span className={`text-2xl ${minimumamountToBePaidByCurrentUserInAnExpense > 0 ? "text-green-600" : "text-red-600"}`}>{minimumamountToBePaidByCurrentUserInAnExpense.toFixed(2)}</span></p>
+                        </div>
+                        
+                        <div className='flex flex-col justify-start items-start'>
+                            <p className='text-[#1d4ed8] text-xl mb-6 font-semibold mt-4'>Who Owes How Much?</p>
+                            <div className='flex flex-col gap-3'>
+                                {
+                                recordOfTransactions.map((transaction,index)=>{
+                                    return <div key={transaction._id} className='flex flex-col justify-start items-center'>
+                                        <p>{transaction.fromUser}{" to "}{transaction.toObj} { " : "}<span className={`font-semibold ${transaction.fromUser == currentUserUsername ? "text-red-600" : ""}${transaction.toObj == currentUserUsername ? "text-green-600" : ""}`}>{transaction.amountTransferred.toFixed(2)}</span></p>
+                                    </div>
+                                })
+                            }
+                            </div>
+                        </div>
+                    </div>
+
                 }
                 
             </div>
 
-            <div className='my-5 flex justify-center items-center'>
-                <ExpenseComponent expenses={expenses} totalExpense={totalExpense}  amountToBePaidByCurrentUserInAnExpense={amountToBePaidByCurrentUserInAnExpense} setExpensePopup={setExpensePopup} setCurrentExpense={setCurrentExpense}/>
+            <div className='my-10 flex justify-center items-center'>
+                <ExpenseComponent totalExpense={totalExpense}  amountToBePaidByCurrentUserInAnExpense={amountToBePaidByCurrentUserInAnExpense} setExpensePopup={setExpensePopup} setCurrentExpense={setCurrentExpense}/>
             </div>
 
 

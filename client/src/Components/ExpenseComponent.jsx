@@ -1,8 +1,9 @@
 import React from 'react'
 import { useState } from 'react';
 
-function ExpenseComponent({expenses, totalExpense, amountToBePaidByCurrentUserInAnExpense, setExpensePopup, setCurrentExpense}) {
+function ExpenseComponent({totalExpense, amountToBePaidByCurrentUserInAnExpense, setExpensePopup, setCurrentExpense}) {
   // console.log(amountToBePaidByCurrentUserInAnExpense?.[0]?.finalResult?.amount)
+  // console.log(new Date(totalExpense[0]?.createdAt).getTime()-new Date().getTime() || "")
   
   return (
     <div className='flex justify-center items-center flex-col border-2 border-[#1d4ed8]/20 rounded-xl pt-4 w-[70vw]'>

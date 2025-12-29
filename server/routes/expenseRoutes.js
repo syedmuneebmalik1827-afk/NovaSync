@@ -5,20 +5,24 @@ let auth = require('../middlewares/auth')
 
 
 // all expenses
-router.get('/dashboard', auth, async (req, res) => {
-    try{
-    let allexpensesGivenToFrontend = await expenseModels.aggregate([
-        {
-            $match : {
-                "contributors": req.user.username
-            }
-        },
-        {
-            $limit : 5
-        }
-    ])
+router.get('/dashboard/:page/:limit', auth, async (req, res) => {
 
-    res.json({allexpensesGivenToFrontend})
+    let limit = req.params.limit
+    let skipDocs = (req.params.page-1)*limit
+
+    try{
+    let allexpensesGivenToFrontend = await expenseModels.find(
+        {contributors : req.user.username}
+    ).skip(skipDocs).limit(limit)
+
+    let allexpensesGivenToFrontendNumber = await expenseModels.find(
+        {contributors : req.user.username}
+    )
+
+
+
+    res.json({allexpensesGivenToFrontend, "totalNumberOfExpenses":allexpensesGivenToFrontendNumber})
+
     }catch(err){
         console.log("error sending all expenses from backend", err)
     }
@@ -251,36 +255,36 @@ router.get('/:groupId', auth, async (req, res)=>{
         ])
  
         // users contribution in each expenses of a group
-        let amountToBePaidByUser = await expenseModels.aggregate([
-            {
-                $match:{
-                    "groupId" : req.params.groupId
-                }
-            },
+        // let amountToBePaidByUser = await expenseModels.aggregate([
+        //     {
+        //         $match:{
+        //             "groupId" : req.params.groupId
+        //         }
+        //     },
 
-            {
-                $project : {
-                    finalResult : {
-                        $map:{
-                            input:{"$objectToArray":"$percentages"},
-                            as:"contributor",
-                            in : {
-                                    "user":"$$contributor.k",
-                                    amount : {
-                                        $cond :[
-                                            {$eq : ["$$contributor.k", "$paidBy"]},
-                                            {$subtract : ["$totalAmount", {$multiply : [{$divide : ["$totalAmount", 100]} , "$$contributor.v"]}]},
-                                            {$multiply : [{$divide : ["$totalAmount", -100]} , "$$contributor.v"]}
-                                        ]
-                                    }
-                            }
-                        }
-                    }
-                }
-            }
-        ])
+        //     {
+        //         $project : {
+        //             finalResult : {
+        //                 $map:{
+        //                     input:{"$objectToArray":"$percentages"},
+        //                     as:"contributor",
+        //                     in : {
+        //                             "user":"$$contributor.k",
+        //                             amount : {
+        //                                 $cond :[
+        //                                     {$eq : ["$$contributor.k", "$paidBy"]},
+        //                                     {$subtract : ["$totalAmount", {$multiply : [{$divide : ["$totalAmount", 100]} , "$$contributor.v"]}]},
+        //                                     {$multiply : [{$divide : ["$totalAmount", -100]} , "$$contributor.v"]}
+        //                                 ]
+        //                             }
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // ])
 
-        // net +- contribution of user (5th column)
+        // net +- contribution of user in one expense (5th column)
         let amountToBePaidByCurrentUser = await expenseModels.aggregate([
             {
                 $match:{
@@ -322,7 +326,7 @@ router.get('/:groupId', auth, async (req, res)=>{
 
         res.json({
             "totalExpense" : totalExpense,
-            "amountToBePaidByUser":amountToBePaidByUser,
+            // "amountToBePaidByUser":amountToBePaidByUser,
             "amountToBePaidByCurrentUser":amountToBePaidByCurrentUser
         })
 
@@ -384,6 +388,294 @@ router.get('/:groupId/minimumTransaction', auth, async (req,res)=>{
             }
         ])
 
+        console.log(minimumTransactionsInBackend)
+
+
+        // // console.log(minimumTransactionsInBackend)
+        // for(let i=0; i< minimumTransactionsInBackend.length; i++){
+        //     if(minimumTransactionsInBackend[i].totalAmount > 0){
+        //         positiveUsers = [...positiveUsers, Math.round(minimumTransactionsInBackend[i].totalAmount)]
+        //     }
+        //     if(minimumTransactionsInBackend[i].totalAmount < 0){
+        //         negativeUsers = [...negativeUsers, Math.round(minimumTransactionsInBackend[i].totalAmount)]
+        //     }
+        // }
+
+        // let oneTransaction = (tempObj) => {
+
+        //     let positiveNumIndexInPositiveUsers=0, negativeNumIndexInNegativeUsers=0
+
+
+        //     // let allSorted=true;
+
+        //     // for(let i=0; i<tempObj.length; i++)
+        //     // {
+        //     //     if(tempObj[i].totalAmount != 0){
+        //     //         allSorted = false;
+        //     //     }
+        //     // }
+
+        //     // if(allSorted){
+        //     //     console.log("returning")
+        //     //     return recordOfTransactions
+        //     // }
+
+        //     let maxPositive=0, maxNeg=0;
+
+        //     for(let i=0; i<positiveUsers.length; i++){
+        //         if(positiveUsers[i] > maxPositive){
+        //             maxPositive = positiveUsers[i]
+        //             positiveNumIndexInPositiveUsers = i
+        //         }
+        //     }
+        //     for(let i=0; i<negativeUsers.length; i++){
+        //         if(Math.abs(negativeUsers[i]) > Math.abs(maxNeg)){
+        //             maxNeg = negativeUsers[i]
+        //             negativeNumIndexInNegativeUsers = i
+        //         }
+        //     }
+
+        //     // console.log(maxNeg, maxPositive, "1")
+
+        //     let positiveNumIndex, negativeNumIndex
+
+
+        //     for(let i=0; i<tempObj.length; i++)
+        //     {
+        //         if(tempObj[i].totalAmount == maxPositive){
+        //             positiveNumIndex = i
+        //         }
+        //         if(tempObj[i].totalAmount == maxNeg){
+        //             negativeNumIndex = i
+        //         }
+        //     }
+
+        //     if(Math.round(Math.abs(maxNeg)) > Math.round(maxPositive)){
+
+        //         console.log("case 1", maxNeg, maxPositive)
+
+        //         console.log(negativeNumIndex)
+        //         // tempObj[negativeNumIndex].totalAmount = Math.round(maxNeg)+Math.round(maxPositive)
+        //         // tempObj[positiveNumIndex].totalAmount = 0
+
+        //         // recordOfTransactions = [...recordOfTransactions, {
+        //         //     "from":tempObj[negativeNumIndex].user,
+        //         //     "to":tempObj[positiveNumIndex].user,
+        //         //     "totalAmount":Math.round(maxNeg)+Math.round(maxPositive)
+        //         // }]
+
+        //         recordOfTransactions = [...recordOfTransactions, {
+        //             "from":tempObj[negativeNumIndex].user,
+        //             "to":tempObj[positiveNumIndex].user,
+        //             "totalAmount": maxPositive
+        //         }]
+
+
+        //         positiveUsers[positiveNumIndexInPositiveUsers] = 0
+        //         negativeUsers[negativeNumIndexInNegativeUsers] = Math.round(maxNeg)+Math.round(maxPositive)
+        //     }
+
+        //     if(Math.round(maxPositive)+Math.round(maxNeg) > 0){
+        //         console.log("case 2", maxNeg, maxPositive)
+
+        //         tempObj[positiveNumIndex].totalAmount = Math.round(maxNeg)+Math.round(maxPositive)
+        //         tempObj[negativeNumIndex].totalAmount = 0
+
+        //         recordOfTransactions = [...recordOfTransactions, {
+        //             "from":tempObj[negativeNumIndex].user,
+        //             "to":tempObj[positiveNumIndex].user,
+        //             "totalAmount":  Math.round(Math.abs(maxNeg))
+        //         }]
+
+        //         negativeUsers[negativeNumIndexInNegativeUsers] = 0
+        //         positiveUsers[positiveNumIndexInPositiveUsers] = Math.round(maxNeg)+Math.round(maxPositive)
+        //     }
+
+        //     if(Math.round(maxNeg) + Math.round(maxPositive) == 0){
+
+        //         console.log("case 3", maxNeg, maxPositive)
+
+        //         tempObj[positiveNumIndex].totalAmount = Math.round(maxNeg)+Math.round(maxPositive)
+        //         tempObj[negativeNumIndex].totalAmount = 0
+
+        //         recordOfTransactions = [...recordOfTransactions, {
+        //             "from":tempObj[negativeNumIndex].user,
+        //             "to":tempObj[positiveNumIndex].user,
+        //             "totalAmount": maxPositive
+        //         }]
+
+        //         negativeUsers[negativeNumIndexInNegativeUsers] = 0
+        //         positiveUsers[positiveNumIndexInPositiveUsers] = Math.round(maxNeg)+Math.round(maxPositive)
+        //     }
+
+        //     // console.log(tempObj)
+        //     console.log(recordOfTransactions)
+
+
+        // }
+        
+        // oneTransaction(tempObj)
+        // oneTransaction(tempObj)
+
+        // maxPositive = 0, maxNeg = 0
+
+        // for(let i=0; i<positiveUsers.length; i++){
+        //     if(positiveUsers[i] > maxPositive){
+        //         maxPositive = positiveUsers[i]
+        //         positiveNumIndexInPositiveUsers = i
+        //     }
+        // }
+
+        // for(let i=0; i<negativeUsers.length; i++){
+        //     if(Math.abs(negativeUsers[i]) > Math.abs(maxNeg)){
+        //         maxNeg = negativeUsers[i]
+        //         negativeNumIndexInNegativeUsers = i
+        //     }
+        // }
+
+        // console.log(maxNeg, maxPositive)
+
+        
+        let positiveUsers = []
+        let negativeUsers = []
+        let negativeUsersTemp = []
+
+        let tempObj = minimumTransactionsInBackend
+        let tempObj2 = minimumTransactionsInBackend
+
+
+        let recordOfTransactions = []
+
+        console.log(tempObj)
+
+        for(let i=0; i<tempObj.length; i++)
+        {
+            if(tempObj[i].totalAmount > 0){
+                positiveUsers = [...positiveUsers, (tempObj[i].totalAmount)]
+            }
+            if(tempObj[i].totalAmount < 0){
+                negativeUsers = [...negativeUsers, (tempObj[i].totalAmount)]
+                negativeUsersTemp = [...negativeUsersTemp, (-1*tempObj[i].totalAmount)]
+            }
+        }
+
+
+        let oneTransaction = (tempObj) => {
+            let maxNeg=0, maxPos=0
+            let maxPosIndex, maxNegIndex
+
+            let isSorted=1
+
+            for(let i=0; i<tempObj.length; i++){
+                if(tempObj[i].totalAmount > 0.0000001){
+                    isSorted=0
+                    break;
+                }
+            }
+
+            
+            if(isSorted){
+                console.log("done")
+                return;
+            }
+            // console.log("returing")
+
+            for(let i=0; i<positiveUsers.length; i++)
+            {
+                if(maxPos < positiveUsers[i]){
+                    maxPos = positiveUsers[i]
+                    maxPosIndex=i
+                }
+            }
+
+            for(let i=0; i<negativeUsers.length; i++)
+            {
+                if(maxNeg > (negativeUsers[i])){
+                    maxNeg = negativeUsers[i]
+                    maxNegIndex=i
+                }
+            }
+
+            console.log(positiveUsers, negativeUsers)
+            console.log(maxNeg, maxPos)
+
+            let userindexintempMax, userindexintempMin
+
+            for(let i=0; i<tempObj.length; i++)
+            {
+                if(tempObj[i].totalAmount == maxNeg){
+                    userindexintempMin=i
+                }
+                if(tempObj[i].totalAmount == maxPos){
+                    userindexintempMax=i
+                }
+            }
+
+            
+
+            if(maxPos < Math.abs(maxNeg)){
+                console.log("case1", maxNeg, maxPos)
+                positiveUsers[maxPosIndex]=0
+                negativeUsers[maxNegIndex] = maxPos+maxNeg
+                tempObj[userindexintempMax].totalAmount = 0
+                tempObj[userindexintempMin].totalAmount = maxNeg+maxPos
+
+                recordOfTransactions = [
+                    ...recordOfTransactions, {
+                        "fromUser":tempObj[userindexintempMin].user,
+                        "toObj":tempObj[userindexintempMax].user,
+                        "amountTransferred":maxPos
+                    }
+                ]
+            }
+            if(maxPos > Math.abs(maxNeg)){
+                console.log("case2", maxNeg, maxPos)
+                positiveUsers[maxPosIndex]=maxPos+maxNeg
+                negativeUsers[maxNegIndex] = 0
+
+                tempObj[userindexintempMin].totalAmount = 0
+                tempObj[userindexintempMax].totalAmount = maxNeg+maxPos
+
+                recordOfTransactions = [
+                    ...recordOfTransactions, {
+                        "fromUser":tempObj[userindexintempMin].user,
+                        "toObj":tempObj[userindexintempMax].user,
+                        "amountTransferred":maxNeg*(-1)
+                    }
+                ]
+            }
+            if(maxPos == Math.abs(maxNeg)){
+                console.log("case3", maxNeg, maxPos)
+                positiveUsers[maxPosIndex]=maxPos+maxNeg
+                negativeUsers[maxNegIndex] = 0
+
+                tempObj[userindexintempMin].totalAmount = 0
+                tempObj[userindexintempMax].totalAmount = 0
+
+                recordOfTransactions = [
+                    ...recordOfTransactions, {
+                        "fromUser":tempObj[userindexintempMin].user,
+                        "toObj":tempObj[userindexintempMax].user,
+                        "amountTransferred":maxPos
+                    }
+                ]
+            }
+
+            console.log(recordOfTransactions)
+            console.log(tempObj)
+            console.log(positiveUsers, negativeUsers)
+
+            
+            oneTransaction(tempObj)
+        }
+
+
+        oneTransaction(tempObj)
+
+        console.log(tempObj2)
+
+
+
         // minimum transaction only of current user in a group
         let minimumTransactionsInBackendForCurrentuser = await expenseModels.aggregate([
             {
@@ -440,11 +732,12 @@ router.get('/:groupId/minimumTransaction', auth, async (req,res)=>{
         ])
 
     res.json({
-        minimumTransactionsInBackend, minimumTransactionsInBackendForCurrentuser
+        minimumTransactionsInBackend, minimumTransactionsInBackendForCurrentuser,
+        "recordOfTransactions":recordOfTransactions
     })
 
     }catch(err){
-        console.log("error getting minmum transactions")
+        console.log("error getting minmum transactions", err)
     }
 
 })

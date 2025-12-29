@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+// let aggregatePaginate = require("mongoose-aggregate-paginate-v2");
 
 let expenseSchema = new mongoose.Schema({
     
@@ -37,6 +38,8 @@ let expenseSchema = new mongoose.Schema({
         of:Number
     }
     
-})
+}, {timestamps:true})
+
+// expenseSchema.plugin(aggregatePaginate);
 
 module.exports = mongoose.model("expenses", expenseSchema)
