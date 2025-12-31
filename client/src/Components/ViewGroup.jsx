@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import axios from 'axios'
-import { ArrowLeft, MoveLeft, Pencil, Users , X} from 'lucide-react'
-import { AnimatePresence, motion } from "framer-motion"
+import { ArrowLeft, MoveLeft, MoveRight, Pencil, Users , X, CalendarFold, UserRoundX} from 'lucide-react'
+import { AnimatePresence, motion, time } from "framer-motion"
 import { useNavigate } from 'react-router-dom'
 import toast from "react-hot-toast";
 import ExpenseComponent from './expenseComponent'
@@ -26,10 +26,11 @@ function ViewGroup() {
     let [recordOfTransactions, setRecordOfTransactions] = useState([])
     let [currentUserUsername, setCurrentUserUsername] = useState("")
 
-    let [minTransactionsOfAllUsersList, setMinTransactionsOfAllUsersList] = useState([])
+    let [filterPopup, setFilterPopup] = useState(false)
+    let [userFilter, setUserFilter] = useState("None")
+    let [timeFilter, setTimeFilter] = useState("None")
+    let timeFilterArray=[];
 
-    
-    // let [expenses, setExpenses] = useState([])
 
     // 
     let [totalExpense, setTotalExpense] = useState([])
@@ -37,8 +38,7 @@ function ViewGroup() {
     // for your contribution column
     let [amountToBePaidByCurrentUserInAnExpense, setAmountToBePaidByCurrentUserInAnExpense] = useState([])
 
-    // at end
-    let [minimumamountToBePaidByCurrentUserInAnExpense, setMinimumAmountToBePaidByCurrentUserInAnExpense] = useState([])
+    let [netbalanceOfUserInAGroup, setNetbalanceOfUserInAGroup] = useState([])
 
     let currentUser = async () =>{
         try{
@@ -58,7 +58,7 @@ function ViewGroup() {
     let fetchExpenses = async () =>{
 
         try{
-            let allExpenses = await axios.get(`http://localhost:3000/expenses/${groupId}`, {
+            let allExpenses = await axios.get(`http://localhost:3000/expenses/${groupId}?timeFilter=${timeFilter}&userFilter=${userFilter}`, {
                 headers:{
                     Authorization: `Bearer ${token}`
                 }
@@ -78,30 +78,21 @@ function ViewGroup() {
     let minimumTransaction = async () =>{
         
         try{
-            let minimumTransaction = await axios.get(`http://localhost:3000/expenses/${groupId}/minimumTransaction`, 
+            let minimumTransaction = await axios.get(`http://localhost:3000/expenses/${groupId}/minimumTransaction?timeFilter=${timeFilter}&userFilter=${userFilter}`, 
             {
             headers:{
                 Authorization:`Bearer ${token}`
             }
         })
 
-        setMinimumAmountToBePaidByCurrentUserInAnExpense(minimumTransaction.data.minimumTransactionsInBackendForCurrentuser[0].totalAmount)
+        setNetbalanceOfUserInAGroup(minimumTransaction.data.minimumTransactionsInBackendForCurrentuser[0].totalAmount)
         setIsloading(false)
-        setMinTransactionsOfAllUsersList(minimumTransaction.data.minimumTransactionsInBackend)
-        console.log(minimumTransaction.data.minimumTransactionsInBackend)
         setRecordOfTransactions(minimumTransaction.data.recordOfTransactions)
-        console.log(minimumTransaction.data.recordOfTransactions)
 
         }catch(err){
             console.log("error occured while finding minimum transactions frontend", err)
         }
     }
-
-    useEffect(()=>{
-        fetchExpenses()
-        minimumTransaction()
-        currentUser()
-    }, [])
 
     let fetchGroupInfo = async () =>{
         try{
@@ -115,6 +106,7 @@ function ViewGroup() {
 
             setCreatedBy(fetchedData.data[0].createdBy.username)
             setMembers(fetchedData.data[0].members)
+            console.log(fetchedData)
             // console.log(fetchedData.data[0])
         }
             catch(err){
@@ -143,43 +135,6 @@ function ViewGroup() {
         }
     }
 
-
-    let totalExpenseData = async () => {
-        let totalExpense = axios.get('http://localhost:3000/expenses/', {
-            headers:{
-                Authorization: `Bearer ${token}`
-            }
-        })
-    }
-
-
-    // created by ka naam
-
-    // let createdByName = async () =>{
-    //     try{
-    //         let createdByInfo = await axios.get((`http://localhost:3000/users/${viewGroupInfo.createdBy}`), {
-    //             headers:{
-    //                 Authorization: `Bearer ${token}`
-    //             }
-    //         })
-    //         setCreatedBy(createdByInfo.data[0])
-    //         console.log(createdByInfo.data[0])
-    //     }catch(err){
-    //         console.log("frontend me error for createdByName", err)
-    //     }
-    // }
-
-    useEffect(()=>{
-        fetchGroupInfo();
-        // console.log(members)
-    }, [editPopup])
-
-    // useEffect(()=>{
-    //     if(viewGroupInfo.createdBy){
-    //         createdByName()
-    //     }
-    // }, [viewGroupInfo])
-        
     let updateGroup = async (e) =>{
         e.preventDefault()
 
@@ -215,6 +170,62 @@ function ViewGroup() {
             setEditPopup(false)
         }
     }
+
+    let timeAgo = (timeGiven) =>{
+        let timeDiff = (new Date().getTime() - new Date(timeGiven).getTime())/(1000*60*60*24)
+        // console.log(timeDiff)
+        
+        if(timeDiff < 1){
+            // console.log((new Date().getTime() - new Date(timeGiven).getTime()))
+            timeFilterArray = ["Today", "This Month", "This Week", "This Year", "None"]
+                // console.log(timeFilterArray)
+
+            return timeFilterArray
+        }
+
+        if(timeDiff < 7){
+            // console.log("2")
+                timeFilterArray = ["This Month", "This Week", "This Year", "None"]
+                // console.log(timeFilterArray)
+
+            return timeFilterArray
+        }
+        if(timeDiff < 31){
+            // console.log("3")
+                timeFilterArray = ["This Month", "This Year", "None"]
+                // console.log(timeFilterArray)
+            return timeFilterArray
+        }
+        if(timeDiff/31 < 12){
+            // console.log("3")
+                timeFilterArray = [ "This Year", "None"]
+                // console.log(timeFilterArray)
+            return timeFilterArray
+        }
+        else if(timeDiff/31 > 12){
+            // console.log("3")
+                timeFilterArray = ["Other", "None"]
+                // console.log(timeFilterArray)
+            return timeFilterArray
+        }
+        
+
+    }
+
+    useEffect(()=>{
+        fetchGroupInfo();
+    }, [editPopup])
+
+    useEffect(()=>{
+        fetchExpenses()
+        minimumTransaction()
+    }, [userFilter, timeFilter])
+
+    useEffect(()=>{
+        currentUser()
+    }, [])
+        
+    
 
   return (
     <div>
@@ -368,7 +379,82 @@ function ViewGroup() {
                             </div>
                         </div>
                     </div></motion.div>}
-                   </AnimatePresence>
+        </AnimatePresence>
+
+        {filterPopup && 
+
+          <div className='min-h-screen w-screen bg-black/50 backdrop-blur-sm fixed inset-0 flex justify-center items-center z-10000'>
+            <div className='bg-[#eef3ff] border-2 border-[#1e2230]/20 min-h-105 w-[550px] rounded-xl pb-5 flex flex-col justify-start items-center'>
+                <div className='flex justify-between items-center w-[96%] mt-2'>
+                    <p className='text-[#1e4ed8] text-3xl font-bold ml-3 mt-3'>Filter Expenses</p>
+                    <button className='flex justify-center items-center cursor-pointer text-white text-lg bg-red-600 px-3 mr-3 py-[2px] rounded hover:bg-red-600/40' onClick={(e)=>{
+                  setFilterPopup(false);
+                  document.body.style.overflow = "auto"
+                  document.documentElement.style.overflow = "auto"
+                 }}>Discard <X/></button>
+                </div>
+
+                <div className='flex justify-between items-start w-[90%] mt-8'>
+                    <div className='flex flex-col w-[45%]'>
+
+                        <p className='flex justify-center items-center gap-2  pb-2'><UserRoundX size={18} className='text-[#1d4ed8]'/>Filter By Users</p>
+
+                        <div className='bg-white rounded p-2 flex flex-col justify-start h-54 border border-[#1d4ed8] overflow-auto w-full'>
+                            <div className='w-full flex flex-col gap-2 justify-start relative overflow-x-hidden'>
+                                <div className='cursor-pointer flex justify-start items-center' onClick={(e)=>setUserFilter("None")}>
+                                    <p className='opacity-0 w-5'>j</p>
+                                    <p className={`${"None" == userFilter ? "text-[#1d4ed8]" : "text-gray-500"}`}>None</p>
+                                </div>
+                            {
+                            members.map((user, index)=>{
+                                return <div className='cursor-pointer flex justify-start items-center' key={index} onClick={(e)=>setUserFilter(user.username)}>
+                                    <p className='opacity-0 w-5'>j</p>
+                                    <p className={`${user.username == userFilter ? "text-[#1d4ed8]" : "text-gray-500"}`}>{user.username}</p>
+                                </div>
+                            })
+                            }
+                            </div>  
+                        </div>
+                    </div>
+                    <div className='flex flex-col w-[45%] '>
+                        <p className='flex justify-center items-center gap-2  pb-2'><CalendarFold size={18} className='text-[#1d4ed8]'/>Filter By Date</p>
+
+                        <div className='bg-white rounded p-2 flex flex-col justify-start gap-2  border border-[#1d4ed8]'>
+                            {/* {
+                            members.map((user, index)=>{
+                                return <div className='cursor-pointer' onClick={(e)=>setUserFilter(user.username)}>
+                                    <p className={`${user.username == userFilter ? "text-[#1d4ed8]" : "text-gray-500"}`}>{user.username}</p>
+                                </div>
+                            })
+                            }   */}
+
+                            <div className='flex flex-col gap-2 h-50 relative left-5'>
+                                
+                            <p className={`cursor-pointer ${timeFilter=="None"?"text-[#1d4ed8]" : "text-gray-500"}`} onClick={(e)=>{setTimeFilter("None")}}>None</p>
+                            <p className={`cursor-pointer ${timeFilter=="Today"?"text-[#1d4ed8]" : "text-gray-500"}`} onClick={(e)=>{setTimeFilter("Today")}}>Today</p>
+                            <p className={`cursor-pointer ${timeFilter=="This Week"?"text-[#1d4ed8]" : "text-gray-500"}`}onClick={(e)=>setTimeFilter("This Week")}>This Week</p>
+                            <p className={`cursor-pointer ${timeFilter=="This Month"?"text-[#1d4ed8]" : "text-gray-500"}`} onClick={(e)=>setTimeFilter("This Month")}>This Month</p>
+                            <p className={`cursor-pointer ${timeFilter=="This Year"?"text-[#1d4ed8]" : "text-gray-500"}`} onClick={(e)=>setTimeFilter("This Year")}>This Year</p>
+                            <p className={`cursor-pointer ${timeFilter=="Other"?"text-[#1d4ed8]" : "text-gray-500"}`} onClick={(e)=>setTimeFilter("Other")}>Other</p>
+                            </div> 
+                        </div>
+                    </div>
+                </div>
+
+                <div className='flex justify-between items-center w-[92%] mt-8'>
+                    <button className='opacity-0'>Set Filter</button>
+                    <button className='bg-[#1d4ed8] px-3 py-1 rounded-sm cursor-pointer hover:bg-[#1d3796] text-white' onClick={(e)=>{
+                        setFilterPopup(false)
+                        document.body.style.overflow = "auto"
+                        document.documentElement.style.overflow = "auto"
+                    }}>Set Filter</button>
+
+                </div>
+
+            </div>
+          </div>
+        
+        }
 
         {/* poora content */}
         <div className='sm:ml-60 '>
@@ -417,24 +503,22 @@ function ViewGroup() {
 
             {/* bottom part */}
             <div className='flex flex-col justify-center items-center w-full'>
-                <div className='flex justify-between items-center w-[70vw] mt-10 mb-5'>
+                <div className='flex justify-between items-center w-[70vw] mt-10 mb-1'>
                     <p className='text-3xl font-bold text-[#1d4ed8]'>Expenses</p>
                     <Link to={`/groups/${groupId}/addExpense`} className='bg-[#1d4ed8] text-white py-[2px] px-[8px] flex justify-center items-center gap-1 text-md cursor-pointer hover:bg-blue-700/40'>Add Expense</Link>
                 </div>
 
                 {!isLoading && 
                     <div className='w-[70vw] flex flex-col justify-center items-start'>
-                        <div className='w-[70vw] flex justify-between items-center '>
-                        <p className='flex justify-center items-center gap-4'>Net Balance : <span className={`text-2xl ${minimumamountToBePaidByCurrentUserInAnExpense > 0 ? "text-green-600" : "text-red-600"}`}>{minimumamountToBePaidByCurrentUserInAnExpense.toFixed(2)}</span></p>
-                        </div>
+                        
                         
                         <div className='flex flex-col justify-start items-start'>
-                            <p className='text-[#1d4ed8] text-xl mb-6 font-semibold mt-4'>Who Owes How Much?</p>
+                            <p className='text-[#1d4ed8] text-xl mb-3 font-semibold mt-6'>Who Owes Whom?</p>
                             <div className='flex flex-col gap-3'>
                                 {
                                 recordOfTransactions.map((transaction,index)=>{
-                                    return <div key={transaction._id} className='flex flex-col justify-start items-center'>
-                                        <p>{transaction.fromUser}{" to "}{transaction.toObj} { " : "}<span className={`font-semibold ${transaction.fromUser == currentUserUsername ? "text-red-600" : ""}${transaction.toObj == currentUserUsername ? "text-green-600" : ""}`}>{transaction.amountTransferred.toFixed(2)}</span></p>
+                                    return <div key={index} className='flex flex-col justify-start items-center'>
+                                        <p className='flex justify-center items-center gap-4'>{transaction.fromUser}<MoveRight strokeWidth={1}/>{transaction.toObj} { " : "}<span className={` ${transaction.fromUser == currentUserUsername ? "text-red-600 font-semibold" : ""}${transaction.toObj == currentUserUsername ? "text-green-600 font-semibold" : ""}`}>{transaction.amountTransferred.toFixed(2)}</span></p>
                                     </div>
                                 })
                             }
@@ -446,8 +530,40 @@ function ViewGroup() {
                 
             </div>
 
-            <div className='my-10 flex justify-center items-center'>
-                <ExpenseComponent totalExpense={totalExpense}  amountToBePaidByCurrentUserInAnExpense={amountToBePaidByCurrentUserInAnExpense} setExpensePopup={setExpensePopup} setCurrentExpense={setCurrentExpense}/>
+            <div className='flex justify-center items-center'>
+                <div className=' flex justify-between w-[66vw] items-center mt-10 mb-2'>
+                <div>
+                    <button className='bg-white border opacity-0 border-[#1d4ed8] text-[#1d4ed8] py-1/2 px-3 cursor-pointer rounded-sm'>{userFilter == "None" && timeFilter=="None" ? "Filter" : "Change Filter"}</button>
+                </div>
+
+                {userFilter != "None" ? 
+                    <p className='text-2xl font-semibold'><span className='text-[#1d4ed8]'>{userFilter == currentUserUsername ? "Your" : userFilter}</span>{userFilter == currentUserUsername ? "" : "'s"} Expenses {timeFilter !="None" ? timeFilter : "Overall" }</p>:
+                    <p className='text-2xl font-semibold'>All Expenses In This Group {timeFilter !="None" ? timeFilter : "" }</p>
+                }
+
+                <div>
+                    <button className='bg-white border border-[#1d4ed8] text-[#1d4ed8] py-1/2 px-3 cursor-pointer rounded-sm hover:bg-[#1d4ed8] hover:text-white transition duration-100' onClick={(e)=>{
+                        document.body.style.overflow = "hidden"
+                        document.documentElement.style.overflow = "hidden"
+                        setFilterPopup(true)
+                    }}>{userFilter == "None" && timeFilter=="None" ? "Filter" : "Remove Filter"}</button>
+                </div>
+            </div>
+            </div>
+
+            <div className='flex justify-center items-center'>
+                {
+                !isLoading ? 
+                <div className='w-[70vw] flex justify-between items-center mt-5'>
+
+                <p className='flex justify-center items-center gap-4'>Net Balance : <span className={`text-2xl ${netbalanceOfUserInAGroup > 0 ? "text-green-600" : "text-red-600"}`}>{netbalanceOfUserInAGroup?.toFixed(2)}</span></p>
+                </div> :
+            ""
+            }
+            </div>
+
+            <div className='my-5 flex justify-center items-center'>
+                <ExpenseComponent totalExpense={totalExpense}  amountToBePaidByCurrentUserInAnExpense={amountToBePaidByCurrentUserInAnExpense} setExpensePopup={setExpensePopup} setCurrentExpense={setCurrentExpense} userFilter={userFilter} currentUserUsername={currentUserUsername} timeFilterArray={timeFilterArray} timeAgo={timeAgo} timeFilter={timeFilter}/>
             </div>
 
 

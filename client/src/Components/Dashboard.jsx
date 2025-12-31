@@ -183,15 +183,15 @@ function Dashboard() {
 
             <div className='flex justify-center items-center gap-10 w-full mb-6 sm:flex-row flex-col'>
               <div className='flex justify-center items-center w-[33%] border-2 border-[#1d4ed8]/20 rounded-xl p-2'>
-                <p className='flex flex-col justify-center items-start my-4 gap-1'>Net Balance : <span className={` text-3xl ${minimumtransactionOfUserInAllExpenses[0]?.totalAmount ? "text-green-600" : "text-red-600"}`}>{minimumtransactionOfUserInAllExpenses[0]?.totalAmount.toFixed(2)}</span></p>
+                <p className='flex flex-col justify-center items-start my-4 gap-1'>Net Balance : <span className={` text-3xl ${minimumtransactionOfUserInAllExpenses[0]?.totalAmount > 0 ? "text-green-600" : "text-red-600"}`}>{minimumtransactionOfUserInAllExpenses[0]?.totalAmount.toFixed(2)}</span></p>
             </div>
 
            <div className='flex justify-center items-center w-[33%] border-2 border-[#1d4ed8]/20 rounded-xl p-2'>
-                <p className='flex flex-col justify-center items-start my-4 gap-1'>Amount Owed : <span className={` text-3xl ${minimumtransactionOfUserInAllExpenses[0]?.totalAmount ? "text-red-600" : "text-red-600"}`}>{amountOwedByUser?.toFixed(2)}</span></p>
+                <p className='flex flex-col justify-center items-start my-4 gap-1'>Amount Owed : <span className={` text-3xl ${minimumtransactionOfUserInAllExpenses[0]?.totalAmount? "text-red-600" : "text-red-600"}`}>{amountOwedByUser?.toFixed(2)}</span></p>
             </div> 
 
            <div className='flex justify-center items-center w-[33%] border-2 border-[#1d4ed8]/20 rounded-xl p-2'>
-                <p className='flex flex-col justify-center items-start my-4 gap-1'>Amount To Recieve : <span className={` text-3xl ${minimumtransactionOfUserInAllExpenses[0]?.totalAmount ? "text-green-600" : "text-red-600"}`}>{amountToBeRecievedByUserTotal?.toFixed(2)}</span></p>
+                <p className='flex flex-col justify-center items-start my-4 gap-1'>Amount To Recieve : <span className={` text-3xl ${minimumtransactionOfUserInAllExpenses[0]?.totalAmount? "text-green-600" : "text-green-600"}`}>{amountToBeRecievedByUserTotal?.toFixed(2)}</span></p>
             </div> 
             </div>
 
@@ -207,7 +207,7 @@ function Dashboard() {
           <p className='w-[14vw] flex justify-center items-center'>Index</p>
           <p className='w-[14vw] flex justify-center items-center'>Title</p>
           <p className='w-[14vw] flex justify-center items-center'>Paid By</p>
-          <p className='w-[14vw] flex justify-center items-center'>Total Amount</p>
+          <p className='w-[14vw] flex justify-center items-center'>Amount</p>
           <p className='w-[14vw] flex justify-center items-center'>Your Contribution</p>
           <div className='w-[14vw] flex justify-center items-center'>
             <button className='flex justify-center items-center gap-2 hover:bg-[#1d4ed8]/40 bg-[#1d4ed8] text-white px-3 py-1 cursor-pointer' onClick={(e)=>{
@@ -225,7 +225,20 @@ function Dashboard() {
                       <p className='w-[14vw] flex justify-center items-center'>{expense.expenseName}</p>
                       <p className='w-[14vw] flex justify-center items-center'>{expense.paidBy}</p>
                       <p className='w-[14vw] flex justify-center items-center'>{expense.totalAmount}</p>
-                      <p className={`w-[14vw] flex justify-center items-center text-2xl ${!totalExpenseOfAUserInOneExpense?.[index]?.finalResult.amount.toFixed(2).includes("-") ? "text-green-600" : "text-red-600"}`}>{totalExpenseOfAUserInOneExpense?.[index]?.finalResult.amount.toFixed(2) ? "" : "-"} {totalExpenseOfAUserInOneExpense?.[index]?.finalResult.amount.toFixed(2)}</p>
+
+                      {/* <p className={`w-[14vw] flex justify-center items-center text-2xl ${!totalExpenseOfAUserInOneExpense?.[index]?.finalResult.amount.toFixed(2).includes("-") ? "text-green-600" : "text-red-600"}`}>{totalExpenseOfAUserInOneExpense?.[index]?.finalResult.amount.toFixed(2) ? "" : "-"} {totalExpenseOfAUserInOneExpense?.[index]?.finalResult.amount.toFixed(2)}</p> */}
+
+                      <p 
+                      className={`w-[14vw] flex justify-center items-center text-2xl ${!totalExpenseOfAUserInOneExpense?.[index]?.finalResult?.amount.toFixed(2).includes("-") ? "text-green-600" : "text-red-600"}`}>
+                      {
+                        totalExpenseOfAUserInOneExpense.map((totalSum,index2)=>{
+                          if(totalExpenseOfAUserInOneExpense[index2]._id == expense._id){
+                            return <span className={`${totalExpenseOfAUserInOneExpense[index2].finalResult.amount > 0 ? "text-green-600" : "text-red-600"}`}>{(totalExpenseOfAUserInOneExpense[index2].finalResult.amount >0 || totalExpenseOfAUserInOneExpense[index2].finalResult.amount <= 0) ? totalExpenseOfAUserInOneExpense[index2].finalResult.amount.toFixed(2) : "0"}</span>
+                          }
+                        })
+                      }
+                      </p>
+
                         <button className='w-[14vw] flex justify-center items-center cursor-pointer' onClick={(e)=>{
                             setCurrentExpense(expense)
                             setExpensePopup(true)

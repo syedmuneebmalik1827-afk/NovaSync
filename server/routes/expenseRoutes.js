@@ -245,41 +245,32 @@ router.get('/minimumTransactionInAllExpenses', auth, async (req, res)=>{
 router.get('/:groupId', auth, async (req, res)=>{
 
     try{
+        let totalExpense
         // all expenses in a group 
-        let totalExpense = await expenseModels.aggregate([
+        if(req.query.userFilter == "None"){
+            totalExpense = await expenseModels.aggregate([
             {
                 $match:{
-                    "groupId":req.params.groupId
+                    "groupId":req.params.groupId,
                 }
             }
         ])
- 
-        // users contribution in each expenses of a group
-        // let amountToBePaidByUser = await expenseModels.aggregate([
+        }else{
+            totalExpense = await expenseModels.aggregate([
+            {
+                $match:{
+                    "groupId":req.params.groupId,
+                    "contributors":req.query.userFilter
+                }
+            }
+        ])
+        }
+
+        // let totalExpense = await expenseModels.aggregate([
         //     {
         //         $match:{
-        //             "groupId" : req.params.groupId
-        //         }
-        //     },
-
-        //     {
-        //         $project : {
-        //             finalResult : {
-        //                 $map:{
-        //                     input:{"$objectToArray":"$percentages"},
-        //                     as:"contributor",
-        //                     in : {
-        //                             "user":"$$contributor.k",
-        //                             amount : {
-        //                                 $cond :[
-        //                                     {$eq : ["$$contributor.k", "$paidBy"]},
-        //                                     {$subtract : ["$totalAmount", {$multiply : [{$divide : ["$totalAmount", 100]} , "$$contributor.v"]}]},
-        //                                     {$multiply : [{$divide : ["$totalAmount", -100]} , "$$contributor.v"]}
-        //                                 ]
-        //                             }
-        //                     }
-        //                 }
-        //             }
+        //             "groupId":req.params.groupId,
+        //             "contributors":req.query.userFilter
         //         }
         //     }
         // ])
@@ -319,10 +310,13 @@ router.get('/:groupId', auth, async (req, res)=>{
             
             {
                 $match:{
-                    "finalResult.user":req.user.username
+                    "finalResult.user":req.query.userFilter
                 }
             }
         ])
+
+        console.log(amountToBePaidByCurrentUser)
+        console.log("ok")
 
         res.json({
             "totalExpense" : totalExpense,
@@ -339,7 +333,7 @@ router.get('/:groupId', auth, async (req, res)=>{
 router.get('/:groupId/minimumTransaction', auth, async (req,res)=>{
     try{
 
-        // minimum transaction of all users in a group
+        // minimum transaction of all users in a group, total to pay (+- of all expenses)
         let minimumTransactionsInBackend = await expenseModels.aggregate([
             {
                 $match:{
@@ -541,7 +535,6 @@ router.get('/:groupId/minimumTransaction', auth, async (req,res)=>{
         let negativeUsersTemp = []
 
         let tempObj = minimumTransactionsInBackend
-        let tempObj2 = minimumTransactionsInBackend
 
 
         let recordOfTransactions = []
@@ -596,8 +589,8 @@ router.get('/:groupId/minimumTransaction', auth, async (req,res)=>{
                 }
             }
 
-            console.log(positiveUsers, negativeUsers)
-            console.log(maxNeg, maxPos)
+            // console.log(positiveUsers, negativeUsers)
+            // console.log(maxNeg, maxPos)
 
             let userindexintempMax, userindexintempMin
 
@@ -661,9 +654,9 @@ router.get('/:groupId/minimumTransaction', auth, async (req,res)=>{
                 ]
             }
 
-            console.log(recordOfTransactions)
-            console.log(tempObj)
-            console.log(positiveUsers, negativeUsers)
+            // console.log(recordOfTransactions)
+            // console.log(tempObj)
+            // console.log(positiveUsers, negativeUsers)
 
             
             oneTransaction(tempObj)
@@ -671,10 +664,6 @@ router.get('/:groupId/minimumTransaction', auth, async (req,res)=>{
 
 
         oneTransaction(tempObj)
-
-        console.log(tempObj2)
-
-
 
         // minimum transaction only of current user in a group
         let minimumTransactionsInBackendForCurrentuser = await expenseModels.aggregate([
@@ -726,7 +715,7 @@ router.get('/:groupId/minimumTransaction', auth, async (req,res)=>{
 
             {
                 $match : {
-                    "user":req.user.username
+                    "user":req.query.userFilter
                 }
             }
         ])
@@ -757,3 +746,5 @@ router.post('/:groupId/add', auth, async (req, res)=>{
 
 
 module.exports = router
+
+

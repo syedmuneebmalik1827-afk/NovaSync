@@ -17,6 +17,9 @@ function Groups() {
 
   let [groupNameSearch, setGroupNameSearch] = useState("")
 
+  let [userFilter, setUserFilter] = useState("None")
+
+
   let createGroup = async (e) =>{
     // e.preventDefault()
 
@@ -106,6 +109,7 @@ function Groups() {
   }, [])
 
   let searchFunc = (e) =>{
+    console.log(e.target.value)
     setGroupNameSearch(e.target.value)
     console.log(e.target.value)
   }
@@ -182,6 +186,8 @@ function Groups() {
         </div></motion.div>}
         </AnimatePresence>
 
+        
+
         <div className='sm:ml-60 flex flex-col'>
 
           <div className='flex justify-between items-center mr-6 ml-6 my-6'>
@@ -196,7 +202,7 @@ function Groups() {
 
           <div className='w-full flex justify-center items-center'>
             <div className='flex items-center w-100 bg-gray-70 rounded-full border py-2 px-3 gap-2 border-[#c5cdde] mt-5 mb-10 transition-all focus:border-[#1d4ed8] transition'>
-              <Search/><input type="text" placeholder='Search By Group Name' className='outline-none text-md ' onChange={(e)=>searchFunc(e)} value={groupNameSearch}/>
+              <Search/><input type="text" placeholder='Search By Group Name' className='outline-none text-md w-80' onChange={(e)=>searchFunc(e)} value={groupNameSearch}/><X className={`text-gray-700 cursor-pointer ${groupNameSearch.trim() === "" ? "opacity-0" : "opacity-100"}`} onClick={(e)=>{setGroupNameSearch("")}}/>
             </div>
           </div>
 
@@ -206,7 +212,7 @@ function Groups() {
               return group.groupName.toLowerCase().includes(groupNameSearch.trim().toLowerCase() || "")
             }).map((group, index)=>{
               let numberOfMembers = group.members.length
-                return <div className='flex gap-2 flex-col bg-[#eef3ff] w-100 min-h-50 rounded shadow-sm p-4' key={group._id}>
+                return <div className='flex gap-2 flex-col bg-[#eef3ff] w-100 min-h-50 justify-center rounded shadow-sm p-4' key={group._id}>
                 {/* <p>Group {index+1} : </p> */}
                 <p className='text-2xl text-[#1e2230] font-semibold'>{group.groupName}</p>
                 <p className='text-gray-600 my-1 text-sm'>{group.groupDescription}</p>

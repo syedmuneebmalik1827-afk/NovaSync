@@ -273,7 +273,7 @@ function AddExpense() {
 
            <div className='text-white bg-red-600 px-1 py-[2px] cursor-pointer flex justify-center items-center hover:bg-red-600/30' onClick={(e)=>{
             navigate(`/groups/${groupId}`)}}>
-            Close<X/>
+            Discard<X/>
            </div>
         </div>
 

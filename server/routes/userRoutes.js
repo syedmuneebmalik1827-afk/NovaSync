@@ -9,6 +9,14 @@ router.post('/register', async (req, res)=>{
     try{
 
         let exists = await userModels.findOne({"email" : req.body.email})
+        let userNameToCheckFoundOrNot = await userModels.findOne({"username":req.body.username})
+
+        if(userNameToCheckFoundOrNot){
+            return res.status(404).json({
+                "message":"Username Already Exists"
+            })
+        }
+        
         if(exists){
             return res.status(401).json({"message" : "User Already Exists"})
         }
@@ -31,6 +39,7 @@ router.post('/register', async (req, res)=>{
 router.post('/login', async (req, res) =>{
     try{
         let userToCheckFoundOrNot = await userModels.findOne({"email":req.body.email})
+        
 
         if(!userToCheckFoundOrNot){
             return res.status(404).json({"message":"User Not Found!"})

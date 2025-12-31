@@ -52,8 +52,8 @@ function Expenses() {
             setTotalExpenseOfAUserInOneExpense(minimumtransactionofallexpensesofuser.data.amountToBePaidByCurrentUser)
             setminimumtransactionOfUserInAllExpenses(minimumtransactionofallexpensesofuser.data.minimumtransactionOfUserInAllExpenses)
 
-            setAmountOwedByUser(minimumtransactionofallexpensesofuser.data.amountOwedByUserTotal[0].totalAmount)
-            setAmountToBeRecievedByUserTotal(minimumtransactionofallexpensesofuser.data.amountToBeRecievedByUserTotal[0].totalAmount)
+            // setAmountOwedByUser(minimumtransactionofallexpensesofuser.data.amountOwedByUserTotal[0].totalAmount)
+            // setAmountToBeRecievedByUserTotal(minimumtransactionofallexpensesofuser.data.amountToBeRecievedByUserTotal[0].totalAmount)
 
         }catch(err){
             console.log("error getting minimum transaction of user in all expenses",err)
@@ -85,13 +85,13 @@ function Expenses() {
                 console.log(timeFilterArray)
             return timeFilterArray
         }
-        if(timeDiff/31 < 1){
+        if(timeDiff/31 < 12){
             console.log("3")
                 timeFilterArray = [ "This Year", "None"]
                 console.log(timeFilterArray)
             return timeFilterArray
         }
-        else if(timeDiff/31 > 1){
+        else if(timeDiff/31 > 12){
             console.log("3")
                 timeFilterArray = ["Other", "None"]
                 console.log(timeFilterArray)
@@ -186,44 +186,35 @@ function Expenses() {
 
         <div className='flex items-center justify-between w-130 bg-gray-70 rounded-full border py-2 px-3 gap-2 border-[#c5cdde] mt-5 mb-5 transition '>
               <div className='flex justify-start items-center w-[90%] gap-4'>
-                <Search/><input type="text" placeholder='Search By Expense Name' className='outline-none text-md' value={searchInput}  onChange={(e)=>{
+                <Search/><input type="text" placeholder='Search By Expense Name' className={`outline-none text-md`} value={searchInput}  onChange={(e)=>{
                 setSearchInput(e.target.value)
               }}/>
               </div>
 
-              <X className='cursor-pointer mr-2' onClick={(e)=>{
+              <X className={`cursor-pointer mr-2 ${searchInput.trim() == "" ? "opacity-0" : "opacity-100"}`} onClick={(e)=>{
                 setSearchInput("")
               }}/>
             </div>
 
-        <div className='flex justify-start items-center w-[70vw] gap-20 my-3'>
-            <p>Filter By : </p>
-            <div className='flex gap-14'>
+        <div className='flex justify-start w-[70vw] gap-5 my-3 flex-col mb-5'>
+            <div className='flex gap-10'>
+                <p>Filter By : </p>
+                <div className='flex gap-14'>
                 <p className={`cursor-pointer ${timeFilter=="None"?"text-[#1d4ed8]" : ""}`} onClick={(e)=>{setTimeFilter("None")}}>None</p>
                 <p className={`cursor-pointer ${timeFilter=="Today"?"text-[#1d4ed8]" : ""}`} onClick={(e)=>{setTimeFilter("Today")}}>Today</p>
                 <p className={`cursor-pointer ${timeFilter=="This Week"?"text-[#1d4ed8]" : ""}`}onClick={(e)=>setTimeFilter("This Week")}>This Week</p>
                 <p className={`cursor-pointer ${timeFilter=="This Month"?"text-[#1d4ed8]" : ""}`} onClick={(e)=>setTimeFilter("This Month")}>This Month</p>
                 <p className={`cursor-pointer ${timeFilter=="This Year"?"text-[#1d4ed8]" : ""}`} onClick={(e)=>setTimeFilter("This Year")}>This Year</p>
                 <p className={`cursor-pointer ${timeFilter=="Other"?"text-[#1d4ed8]" : ""}`} onClick={(e)=>setTimeFilter("Other")}>Other</p>
+                </div>
             </div>
             {/* <div className='flex gap-10'>
-                <p className='cursor-pointer' onClick={(e)=>setExpenses(expensesTemp)}>None</p>
-                <p className='cursor-pointer' onClick={(e)=>{
-                    let newExpenses = expenses.filter((expense, index)=>{
-                        return totalExpenseOfAUserInOneExpense?.[index]?.finalResult.amount.toFixed(2).includes("-") 
-                    })
-
-                    setExpenses(newExpenses)
-                }}>Owed</p>
-                <p className='cursor-pointer' onClick={(e)=>{
-                    let newExpensesRecievable = expenses.filter((expense, index)=>{
-                        return !totalExpenseOfAUserInOneExpense?.[index]?.finalResult.amount.toFixed(2).includes("-") 
-                    })
-
-                    setExpenses(newExpensesRecievable)
-                }}>Recievable</p>
+                <p className='opacity-0'>Filter By : </p>
+                <div className='flex gap-14'>
+                <p className={`cursor-pointer ${owedFilter=="Owed"?"text-[#1d4ed8]" : ""}`} onClick={(e)=>{setOwedFilter("Owed")}}>Owed</p>
+                <p className={`cursor-pointer ${owedFilter=="To Recieve"?"text-[#1d4ed8]" : ""}`}onClick={(e)=>setOwedFilter("To Recieve")}>To Recieve</p>
+                </div>
             </div> */}
-
 
         </div>
         <div className='border-2 border-[#1d4ed8]/20 rounded-xl pt-4 mb-10 mt-3'>
@@ -232,7 +223,7 @@ function Expenses() {
           <p className='w-[14vw] flex justify-center items-center'>Index</p>
           <p className='w-[14vw] flex justify-center items-center'>Title</p>
           <p className='w-[14vw] flex justify-center items-center'>Paid By</p>
-          <p className='w-[14vw] flex justify-center items-center'>Total Amount</p>
+          <p className='w-[14vw] flex justify-center items-center'>Amount</p>
           <p className='w-[14vw] flex justify-center items-center'>Your Contribution</p>
         <button className='w-[14vw] flex justify-center items-center opacity-0'>View</button>
             </div>
@@ -252,7 +243,24 @@ function Expenses() {
                       <p className='w-[14vw] flex justify-center items-center'>{expense.expenseName}</p>
                       <p className='w-[14vw] flex justify-center items-center'>{expense.paidBy}</p>
                       <p className='w-[14vw] flex justify-center items-center'>{expense.totalAmount}</p>
-                      <p className={`w-[14vw] flex justify-center items-center text-2xl ${!totalExpenseOfAUserInOneExpense?.[index]?.finalResult.amount.toFixed(2).includes("-") ? "text-green-600" : "text-red-600"}`}>{totalExpenseOfAUserInOneExpense?.[index]?.finalResult.amount.toFixed(2) ? "" : "-"} {totalExpenseOfAUserInOneExpense?.[index]?.finalResult.amount.toFixed(2)}</p>
+
+
+                      {/* <p className={`w-[14vw] flex justify-center items-center text-2xl ${!totalExpenseOfAUserInOneExpense?.[index]?.finalResult.amount.toFixed(2).includes("-") ? "text-green-600" : "text-red-600"}`}>{totalExpenseOfAUserInOneExpense?.[index]?.finalResult.amount.toFixed(2) ? "" : "-"} {totalExpenseOfAUserInOneExpense?.[index]?.finalResult.amount.toFixed(2)}</p> */}
+
+                      <p 
+                      className={`w-[14vw] flex justify-center items-center text-2xl ${!totalExpenseOfAUserInOneExpense?.[index]?.finalResult?.amount.toFixed(2).includes("-") ? "text-green-600" : "text-red-600"}`}>
+                      {
+                        totalExpenseOfAUserInOneExpense.map((totalSum,index2)=>{
+                          if(totalExpenseOfAUserInOneExpense[index2]._id == expense._id){
+                            return <span className={`${totalExpenseOfAUserInOneExpense[index2].finalResult.amount > 0 ? "text-green-600" : "text-red-600"}`}>{totalExpenseOfAUserInOneExpense[index2].finalResult.amount ? totalExpenseOfAUserInOneExpense[index2].finalResult.amount.toFixed(2
+
+                            ) : "0"}</span>
+                          }
+                        })
+                      }
+                      </p>
+
+
                         <button className='w-[14vw] flex justify-center items-center cursor-pointer' onClick={(e)=>{
                             setCurrentExpense(expense)
                             setExpensePopup(true)
