@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import axios from 'axios'
-import { ArrowLeft, MoveLeft, MoveRight, Pencil, Users , X, CalendarFold, UserRoundX} from 'lucide-react'
+import { ArrowLeft, MoveLeft, MoveRight, Pencil, Users , X, CalendarFold, UserRoundX, MessageCircleMore} from 'lucide-react'
 import { AnimatePresence, motion, time } from "framer-motion"
 import { useNavigate } from 'react-router-dom'
 import toast from "react-hot-toast";
@@ -230,6 +230,11 @@ function ViewGroup() {
   return (
     <div>
 
+        <div className='fixed bottom-20 right-40 bg-[#1d4ed8] py-2 px-4 rounded-xl cursor-pointer flex justify-center items-center gap-2 hover:bg-[#10359b]' onClick={(e)=>{
+            navigate(`/${groupId}/chat`)
+        }}>
+            <MessageCircleMore className='text-white' size={25}/> <p className='text-white'>Chat</p>
+        </div>
         <AnimatePresence>{editPopup && 
         <motion.div
             initial={{ opacity: 0, scale: 0.95, y: -10 }}

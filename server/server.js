@@ -11,6 +11,7 @@ dbconnection()
 const userRoutes = require('./routes/userRoutes')
 const groupRoutes = require('./routes/groupRoutes')
 let expenseRoutes = require('./routes/expenseRoutes')
+let chatRoutes = require('./routes/chatRoutes')
 
 app.use(express.json())
 app.use(express.urlencoded({extended:true}))
@@ -19,6 +20,7 @@ app.use(cors())
 app.use('/users', userRoutes)
 app.use('/groups', groupRoutes)
 app.use('/expenses', expenseRoutes)
+app.use('/chats', chatRoutes)
 
 app.get('/', (req,res)=>{
     res.send("Hello")

@@ -12,6 +12,7 @@ import ProtectedRoutes from './Components/ProtectedRoutes';
 import ViewGroup from './Components/ViewGroup';
 import AddExpense from './Components/AddExpense';
 import Expenses from './Components/Expenses';
+import Chat from './Components/Chat';
 
 function App() {
   const [count, setCount] = useState(0)
@@ -30,6 +31,7 @@ function App() {
         <Route path='/expenses' element={<Expenses/>} />
         <Route path='/groups/:groupId' element={<ViewGroup/>} />
         <Route path='/groups/:groupId/addExpense' element={<AddExpense/>}/>
+        <Route path='/:groupId/chat' element={<Chat/>}/>
       </Route>
       
     </Routes>
